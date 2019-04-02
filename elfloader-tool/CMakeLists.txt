@@ -144,7 +144,7 @@ add_custom_command(OUTPUT "linker.lds_pp"
 )
 add_custom_target(elfloader_linker DEPENDS linker.lds_pp)
 
-add_executable(elfloader EXCLUDE_FROM_ALL ${files} archive.o)
+add_executable(elfloader EXCLUDE_FROM_ALL ${files})
 target_include_directories(elfloader PRIVATE
     "include"
     "include/plat/${KernelPlatform}"
