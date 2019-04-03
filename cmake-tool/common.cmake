@@ -76,10 +76,12 @@ function(MakeCPIO output_name input_files)
         # - touch -d @0 file sets the modified time to 0
         # - --owner=root:root sets user and group values to 0:0
         # - --reproducible creates reproducible archives with consistent inodes and device numbering
-        list(APPEND commands
-            "bash;-c;cd `dirname ${file}` && mkdir -p temp && cd temp && cp -a ${file} . && touch -d @0 `basename ${file}` && riscv64-unknown-elf-strip -s `basename ${file}` && echo `basename ${file}` | cpio ${append} ${reproducible_flag} --owner=root:root --quiet -o -H newc --file=${CMAKE_CURRENT_BINARY_DIR}/archive.${output_name}.cpio && rm `basename ${file}` && cd ../ && rmdir temp;&&"
+        if (NOT "`basename ${file}`" MATCHES "kernel")
+            list(APPEND commands
+                "bash;-c;cd `dirname ${file}` && mkdir -p temp && cd temp && cp -a ${file} . && touch -d @0 `basename ${file}` && riscv64-unknown-elf-strip -s `basename ${file}` && echo `basename ${file}` | cpio ${append} ${reproducible_flag} --owner=root:root --quiet -o -H newc --file=${CMAKE_CURRENT_BINARY_DIR}/archive.${output_name}.cpio && rm `basename ${file}` && cd ../ && rmdir temp;&&"
         )
         set(append "--append")
+        endif()
     endforeach()
     list(APPEND commands "true")
 
