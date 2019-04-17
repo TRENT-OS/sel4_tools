@@ -144,13 +144,16 @@ void main ( int hardid, unsigned long dtb )
     printf ( "ELF-loader started on\n" );
 
     printf ( "  paddr=[%p..%p]\n", _start, _end - 1 );
+
     /* Unpack ELF images into memory. */
     load_images ( &kernel_info, &user_info, 1, &num_apps );
+#if 0
     if ( num_apps != 1 )
     {
         printf ( "No user images loaded!\n" );
         abort();
     }
+#endif
 
     printf ( "kernel image info:\n" );
     printElfInfo ( &kernel_info );
