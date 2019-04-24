@@ -127,14 +127,14 @@ uint64_t vm_mode = 0x9llu << 60;
 #error "Wrong PT level"
 #endif
 
-void printElfInfo ( struct image_info *info )
+static void printElfInfo ( struct image_info *info )
 {
-    printf ( "phys_region_start: %x", info->phys_region_start );
-    printf ( "phys_region_end: %x", info->phys_region_end );
-    printf ( "virt_region_start: %x", info->virt_region_start );
-    printf ( "virt_region_end: %x", info->virt_region_end );
-    printf ( "virt_entry: %x", info->virt_entry );
-    printf ( "phys_virt_offset: %x", info->phys_virt_offset );
+    printf ( "phys_region_start: %x\n", info->phys_region_start );
+    printf ( "phys_region_end: %x\n", info->phys_region_end );
+    printf ( "virt_region_start: %x\n", info->virt_region_start );
+    printf ( "virt_region_end: %x\n", info->virt_region_end );
+    printf ( "virt_entry: %x\n", info->virt_entry );
+    printf ( "phys_virt_offset: %x\n", info->phys_virt_offset );
 }
 
 int num_apps = 0;
@@ -159,7 +159,10 @@ void main ( int hardid, unsigned long dtb )
     printElfInfo ( &kernel_info );
     printf ( "user image info:\n" );
     printElfInfo ( &user_info );
-
+#if 0
+    while ( 1 )
+        ;
+#endif
     map_kernel_window ( &kernel_info );
 
     printf ( "Jumping to kernel-image entry point...\n\n" );
