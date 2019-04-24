@@ -27,8 +27,10 @@
 #include "crypt_md5.h"
 #endif
 
+#define LOAD_USER_IMAGE
+
 #include "hash.h"
-#if 0
+#if defined(LOAD_USER_IMAGE)
 /* Determine if two intervals overlap. */
 static int regions_overlap ( uintptr_t startA, uintptr_t endA,
                              uintptr_t startB, uintptr_t endB )
@@ -280,9 +282,11 @@ static paddr_t load_elf ( const char *name, void *elf, paddr_t dest_paddr,
 void load_images ( struct image_info *kernel_info, struct image_info *user_info,
                    int max_user_images, int *num_images )
 {
-#if 0
+#if defined(LOAD_USER_IMAGE)
     int i;
+#if 0
     uint64_t kernel_phys_start, kernel_phys_end;
+#endif
     paddr_t next_phys_addr;
     const char *elf_filename;
     unsigned long unused;
@@ -314,39 +318,16 @@ void load_images ( struct image_info *kernel_info, struct image_info *user_info,
     kernel_info->virt_region_end = 0xffffffff80028000;
     kernel_info->virt_entry = 0xffffffff80000000;
     kernel_info->phys_virt_offset = 0xffffffff82000000;
-#if 0
+#if defined(LOAD_USER_IMAGE)
     next_phys_addr = kernel_info->phys_region_end;
-#endif
+    next_phys_addr = 0x01e80000;
+#else
     user_info->phys_region_start = 0x01f00000;
     user_info->phys_region_end = 0x01f35000;
     user_info->virt_region_start = 0x0000000000010000;
     user_info->virt_region_end = 0x0000000000045000;
     user_info->virt_entry = 0x00000000000123b4;
-
     user_info->phys_virt_offset = 0x01ef0000;
-
-
-
-#if 0
-kernel image info:
-    phys_region_start: 2000000
-    phys_region_end: 2028000
-virt_region_start:
-    ffffffff80000000
-virt_region_end:
-    ffffffff80028000
-virt_entry:
-    ffffffff80000000
-phys_virt_offset:
-    ffffffff82000000
-
-user image info:
-    phys_region_start: 2028000
-    phys_region_end: 216d000
-    virt_region_start: 10000
-    virt_region_end: 155000
-    virt_entry: 123b4
-    phys_virt_offset: 2018000
 #endif
 
     /*
@@ -364,7 +345,7 @@ user image info:
     }
 #endif
     printf ( "s00\n" );
-#if 0
+#if defined(LOAD_USER_IMAGE)
     *num_images = 0;
     for ( i = 0; i < max_user_images; i++ )
     {
@@ -386,4 +367,11 @@ user image info:
         *num_images = i + 1;
     }
 #endif
+
+    user_info->phys_region_start = 0x01e80000;
+    user_info->phys_region_end = 0x01fc5000;
+    user_info->virt_region_start = 0x10000;
+    user_info->virt_region_end = 0x155000;
+    user_info->virt_entry = 0x123b4;
+    user_info->phys_virt_offset = 0x01e70000;
 }
