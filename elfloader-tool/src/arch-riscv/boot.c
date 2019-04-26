@@ -129,12 +129,12 @@ uint64_t vm_mode = 0x9llu << 60;
 
 static void printElfInfo ( struct image_info *info )
 {
-    printf ( "phys_region_start: %x\n", info->phys_region_start );
-    printf ( "phys_region_end: %x\n", info->phys_region_end );
-    printf ( "virt_region_start: %x\n", info->virt_region_start );
-    printf ( "virt_region_end: %x\n", info->virt_region_end );
-    printf ( "virt_entry: %x\n", info->virt_entry );
-    printf ( "phys_virt_offset: %x\n", info->phys_virt_offset );
+    printf ( "phys_region_start: %016lx\n", info->phys_region_start );
+    printf ( "phys_region_end: %016lx\n", info->phys_region_end );
+    printf ( "virt_region_start: %016lx\n", info->virt_region_start );
+    printf ( "virt_region_end: %016lx\n", info->virt_region_end );
+    printf ( "virt_entry: %016lx\n", info->virt_entry );
+    printf ( "phys_virt_offset: %016lx\n", info->phys_virt_offset );
 }
 
 int num_apps = 0;
