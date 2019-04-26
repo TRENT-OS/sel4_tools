@@ -312,15 +312,22 @@ void load_images ( struct image_info *kernel_info, struct image_info *user_info,
                                 ( paddr_t ) kernel_phys_start, kernel_info, 0, unused, "kernel.bin" );
 #endif
 
-    kernel_info->phys_region_start = 0x2000000;
+    kernel_info->phys_region_start = 0x1e00000;
     kernel_info->phys_region_end = 0x2028000;
+#if 0
     kernel_info->virt_region_start = 0xffffffff80000000;
+#endif
+    kernel_info->virt_region_start = 0xffffffff7fe00000;
+#if 0
+    kernel_info->virt_region_start = 0xffffffff80000000;
+    kernel_info->virt_region_start -= 2 * 1024 * 1024;
+#endif
     kernel_info->virt_region_end = 0xffffffff80028000;
     kernel_info->virt_entry = 0xffffffff80000000;
     kernel_info->phys_virt_offset = 0xffffffff82000000;
 #if defined(LOAD_USER_IMAGE)
     next_phys_addr = kernel_info->phys_region_end;
-    next_phys_addr = 0x01e80000;
+    next_phys_addr = 0x01e60000;
 #else
     user_info->phys_region_start = 0x01f00000;
     user_info->phys_region_end = 0x01f35000;
@@ -329,6 +336,10 @@ void load_images ( struct image_info *kernel_info, struct image_info *user_info,
     user_info->virt_entry = 0x00000000000123b4;
     user_info->phys_virt_offset = 0x01ef0000;
 #endif
+
+
+
+
 
     /*
      * Load userspace images.
@@ -367,10 +378,12 @@ void load_images ( struct image_info *kernel_info, struct image_info *user_info,
         *num_images = i + 1;
     }
 #endif
+#if 0
     user_info->phys_region_start = 0x01e80000;
     user_info->phys_region_end = 0x01fc6000;
     user_info->virt_region_start = 0x10000;
     user_info->virt_region_end = 0x156000;
     user_info->virt_entry = 0x123e6;
     user_info->phys_virt_offset = 0x01e70000;
+#endif
 }
