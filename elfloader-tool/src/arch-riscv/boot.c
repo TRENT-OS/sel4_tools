@@ -233,9 +233,6 @@ void main ( int hardid, unsigned long dtb )
 
     map_kernel_window ( &kernel_info );
 
-    while ( 1 )
-        ;
-
     printf ( "Jumping to kernel-image entry point...\n\n" );
 
     asm volatile ( "sfence.vma" );
