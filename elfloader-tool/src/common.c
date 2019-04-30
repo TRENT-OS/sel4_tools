@@ -314,16 +314,13 @@ void load_images ( struct image_info *kernel_info, struct image_info *user_info,
 
     kernel_info->phys_region_start = 0x1e00000;
     kernel_info->phys_region_end = 0x2028000;
-#if 0
     kernel_info->virt_region_start = 0xffffffff80000000;
-#endif
-    kernel_info->virt_region_start = 0xffffffff7fe00000;
 #if 0
     kernel_info->virt_region_start = 0xffffffff80000000;
     kernel_info->virt_region_start -= 2 * 1024 * 1024;
 #endif
     kernel_info->virt_region_end = 0xffffffff80028000;
-    kernel_info->virt_entry = 0xffffffff80000000;
+    kernel_info->virt_entry = 0xffffffff80200000;
     kernel_info->phys_virt_offset = 0xffffffff82000000;
 #if defined(LOAD_USER_IMAGE)
     next_phys_addr = kernel_info->phys_region_end;
