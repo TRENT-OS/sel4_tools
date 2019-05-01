@@ -72,11 +72,10 @@ void map_kernel_window(struct image_info *kernel_info)
     l1pt[index] = PTE_CREATE_NEXT((uintptr_t)l2pt_elf);
     index = GET_PT_INDEX((uintptr_t)_text, PT_LEVEL_2);
 #endif
-
-    if (IS_ALIGNED((uintptr_t)_text, PT_LEVEL_2_BITS)) {
+    uintptr_t _start_rounded = (uintptr_t)_start & ~MASK(21);
+    if (IS_ALIGNED((uintptr_t)_start_rounded, PT_LEVEL_2_BITS)) {
         for (int page = 0; index < PTES_PER_PT; index++, page++) {
-            lpt[index] = PTE_CREATE_LEAF((uintptr_t)_text +
-                                         (page << PT_LEVEL_2_BITS));
+            lpt[index] = PTE_CREATE_LEAF((uintptr_t)_start_rounded +
         }
     } else {
         printf("Elfloader not properly aligned\n");
@@ -85,16 +84,18 @@ void map_kernel_window(struct image_info *kernel_info)
 
     /* Map the kernel into the new address space */
     index = GET_PT_INDEX(kernel_info->virt_region_start, PT_LEVEL_1);
+    _start_rounded = kernel_info->virt_region_start & ~MASK(21);
+    uintptr_t _start_rounded2 = kernel_info->phys_region_start & ~MASK(21);
 
 #if __riscv_xlen == 64
     lpt = l2pt;
     l1pt[index] = PTE_CREATE_NEXT((uintptr_t)l2pt);
-    index = GET_PT_INDEX(kernel_info->virt_region_start, PT_LEVEL_2);
+    index = GET_PT_INDEX(_start_rounded, PT_LEVEL_2);
 #endif
-    if (VIRT_PHYS_ALIGNED(kernel_info->virt_region_start,
-                          kernel_info->phys_region_start, PT_LEVEL_2_BITS)) {
+    if (VIRT_PHYS_ALIGNED(_start_rounded,
+                          _start_rounded2, PT_LEVEL_2_BITS)) {
         for (int page = 0; index < PTES_PER_PT; index++, page++) {
-            lpt[index] = PTE_CREATE_LEAF(kernel_info->phys_region_start +
+            lpt[index] = PTE_CREATE_LEAF(_start_rounded2 +
                                          (page << PT_LEVEL_2_BITS));
         }
     } else {
