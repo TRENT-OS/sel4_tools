@@ -43,6 +43,8 @@ void clear_bss(void)
 
 #define KEEP_HEADERS_SIZE BIT(PAGE_BITS)
 
+//#define LOAD_KERNEL
+
 /* Determine if two intervals overlap. */
 static int regions_overlap(uintptr_t startA, uintptr_t endA,
                            uintptr_t startB, uintptr_t endB)
@@ -287,8 +289,9 @@ void load_images(struct image_info *kernel_info, struct image_info *user_info,
                  uint32_t *chosen_dtb_size)
 {
     int i;
-    uint64_t kernel_phys_start, kernel_phys_end;
+#if defined(LOAD_KERNEL)
     uintptr_t dtb_phys_start, dtb_phys_end;
+#endif
     paddr_t next_phys_addr;
     const char *elf_filename;
     unsigned long unused;
@@ -297,6 +300,7 @@ void load_images(struct image_info *kernel_info, struct image_info *user_info,
 
     /* Load kernel. */
     unsigned long cpio_len = _archive_start_end - _archive_start;
+#if defined(LOAD_KERNEL)
     void *kernel_elf = cpio_get_file(_archive_start, cpio_len, "kernel.elf", &kernel_filesize);
     if (kernel_elf == NULL) {
         printf("No kernel image present in archive!\n");
@@ -365,6 +369,16 @@ void load_images(struct image_info *kernel_info, struct image_info *user_info,
     }
     load_elf("kernel", kernel_elf,
              (paddr_t)kernel_phys_start, kernel_info, 0, kernel_filesize, "kernel.bin");
+#endif
+//#if 0
+    kernel_info->phys_region_start = 0x01f80000;
+    kernel_info->phys_region_end = 0x2022000;
+    kernel_info->virt_region_start = 0xffffffff81f80000;
+    kernel_info->virt_region_end = 0xffffffff82022000;
+    kernel_info->virt_entry = 0xffffffff82000000;
+    kernel_info->phys_virt_offset = 0xffffffff80000000;
+//#endif
+    next_phys_addr = kernel_info->phys_region_end;
 
     /*
      * Load userspace images.
@@ -373,6 +387,7 @@ void load_images(struct image_info *kernel_info, struct image_info *user_info,
      * that the DTB is the second if present,
      * and then load the (n+user_elf_offset)'th file in the archive onto the (n)'th CPU.
      */
+#if defined(LOAD_KERNEL)
     int user_elf_offset = 2;
     cpio_get_entry(_archive_start, cpio_len, 0, &elf_filename, &unused);
     if (strcmp(elf_filename, "kernel.elf") != 0) {
@@ -406,11 +421,16 @@ void load_images(struct image_info *kernel_info, struct image_info *user_info,
     next_phys_addr = ROUND_DOWN(memory_region[0].end, PAGE_BITS) - ROUND_UP(total_user_image_size, PAGE_BITS);
 #endif /* CONFIG_ELFLOADER_ROOTSERVERS_LAST */
 
+#endif
     *num_images = 0;
     for (i = 0; i < max_user_images; i++) {
         /* Fetch info about the next ELF file in the archive. */
         void *user_elf = cpio_get_entry(_archive_start, cpio_len, i + user_elf_offset,
                                         &elf_filename, &unused);
+#else
+        void *user_elf = cpio_get_entry(_archive_start, cpio_len, i + 1,
+                                        &elf_filename, &unused);
+#endif
         if (user_elf == NULL) {
             break;
         }
