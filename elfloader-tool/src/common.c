@@ -29,6 +29,8 @@
 
 #include "hash.h"
 
+//#define LOAD_KERNEL
+
 /* Determine if two intervals overlap. */
 static int regions_overlap(uintptr_t startA, uintptr_t endA,
                            uintptr_t startB, uintptr_t endB)
@@ -265,13 +267,16 @@ void load_images(struct image_info *kernel_info, struct image_info *user_info,
                  int max_user_images, int *num_images)
 {
     int i;
+#if defined(LOAD_KERNEL)    
     uint64_t kernel_phys_start, kernel_phys_end;
+#endif
     paddr_t next_phys_addr;
     const char *elf_filename;
     unsigned long unused;
 
     /* Load kernel. */
     unsigned long cpio_len = _archive_start_end - _archive_start;
+#if defined(LOAD_KERNEL)    
     void *kernel_elf = cpio_get_file(_archive_start, cpio_len, "kernel.elf", &unused);
     if (kernel_elf == NULL) {
         printf("No kernel image present in archive!\n");
@@ -285,6 +290,16 @@ void load_images(struct image_info *kernel_info, struct image_info *user_info,
     elf_getMemoryBounds(kernel_elf, 1, &kernel_phys_start, &kernel_phys_end);
     next_phys_addr = load_elf("kernel", kernel_elf,
                               (paddr_t)kernel_phys_start, kernel_info, 0, unused, "kernel.bin");
+#endif
+//#if 0
+    kernel_info->phys_region_start = 0x01f80000;
+    kernel_info->phys_region_end = 0x2022000;
+    kernel_info->virt_region_start = 0xffffffff81f80000;
+    kernel_info->virt_region_end = 0xffffffff82022000;
+    kernel_info->virt_entry = 0xffffffff82000000;
+    kernel_info->phys_virt_offset = 0xffffffff80000000;
+//#endif
+    next_phys_addr = kernel_info->phys_region_end;
 
     /*
      * Load userspace images.
@@ -292,16 +307,23 @@ void load_images(struct image_info *kernel_info, struct image_info *user_info,
      * We assume (and check) that the kernel is the first file in the archive,
      * and then load the (n+1)'th file in the archive onto the (n)'th CPU.
      */
+#if defined(LOAD_KERNEL)    
     (void)cpio_get_entry(_archive_start, cpio_len, 0, &elf_filename, &unused);
     if (strcmp(elf_filename, "kernel.elf") != 0) {
         printf("Kernel image not first image in archive.\n");
         abort();
     }
+#endif    
     *num_images = 0;
     for (i = 0; i < max_user_images; i++) {
         /* Fetch info about the next ELF file in the archive. */
+#if defined(LOAD_KERNEL)    
         void *user_elf = cpio_get_entry(_archive_start, cpio_len, i + 1,
                                         &elf_filename, &unused);
+#else
+        void *user_elf = cpio_get_entry(_archive_start, cpio_len, i + 1,
+                                        &elf_filename, &unused);
+#endif
         if (user_elf == NULL) {
             break;
         }
