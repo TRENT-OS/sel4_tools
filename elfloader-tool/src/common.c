@@ -321,7 +321,7 @@ void load_images(struct image_info *kernel_info, struct image_info *user_info,
         void *user_elf = cpio_get_entry(_archive_start, cpio_len, i + 1,
                                         &elf_filename, &unused);
 #else
-        void *user_elf = cpio_get_entry(_archive_start, cpio_len, i + 1,
+        void *user_elf = cpio_get_entry(_archive_start, cpio_len, i,
                                         &elf_filename, &unused);
 #endif
         if (user_elf == NULL) {
