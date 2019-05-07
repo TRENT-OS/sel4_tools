@@ -154,6 +154,16 @@ static inline void enable_virtual_memory(void)
     ifence();
 }
 
+void printElfInfo ( struct image_info *info )
+{
+    printf ( "phys_region_start: %x", info->phys_region_start );
+    printf ( "phys_region_end: %x", info->phys_region_end );
+    printf ( "virt_region_start: %x", info->virt_region_start );
+    printf ( "virt_region_end: %x", info->virt_region_end );
+    printf ( "virt_entry: %x", info->virt_entry );
+    printf ( "phys_virt_offset: %x", info->phys_virt_offset );
+}
+
 int num_apps = 0;
 void main(UNUSED int hartid, void *bootloader_dtb)
 {
@@ -169,6 +179,11 @@ void main(UNUSED int hartid, void *bootloader_dtb)
         printf("No user images loaded!\n");
         abort();
     }
+
+    printf("kernel image info:\n");
+    printElfInfo ( &kernel_info);
+    printf("user image info:\n");
+    printElfInfo(&user_info);
 
     map_kernel_window(&kernel_info);
 
