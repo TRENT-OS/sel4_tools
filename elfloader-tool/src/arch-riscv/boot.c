@@ -122,6 +122,16 @@ uint64_t vm_mode = 0x9llu << 60;
 #error "Wrong PT level"
 #endif
 
+void printElfInfo ( struct image_info *info )
+{
+    printf ( "phys_region_start: %x", info->phys_region_start );
+    printf ( "phys_region_end: %x", info->phys_region_end );
+    printf ( "virt_region_start: %x", info->virt_region_start );
+    printf ( "virt_region_end: %x", info->virt_region_end );
+    printf ( "virt_entry: %x", info->virt_entry );
+    printf ( "phys_virt_offset: %x", info->phys_virt_offset );
+}
+
 int num_apps = 0;
 void main(void)
 {
@@ -134,6 +144,11 @@ void main(void)
         printf("No user images loaded!\n");
         abort();
     }
+
+    printf("kernel image info:\n");
+    printElfInfo ( &kernel_info);
+    printf("user image info:\n");
+    printElfInfo(&user_info);
 
     map_kernel_window(&kernel_info);
 
