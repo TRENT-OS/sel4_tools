@@ -30,7 +30,9 @@
 #include "hash.h"
 
 //#define LOAD_KERNEL
+//#define LOAD_USER
 
+#if defined(LOAD_USER)
 /* Determine if two intervals overlap. */
 static int regions_overlap(uintptr_t startA, uintptr_t endA,
                            uintptr_t startB, uintptr_t endB)
@@ -234,7 +236,7 @@ static paddr_t load_elf(const char *name, void *elf, paddr_t dest_paddr,
     }
     return dest_paddr;
 }
-
+#endif
 /*
  * ELF-loader for ARM systems.
  *
@@ -266,16 +268,26 @@ static paddr_t load_elf(const char *name, void *elf, paddr_t dest_paddr,
 void load_images(struct image_info *kernel_info, struct image_info *user_info,
                  int max_user_images, int *num_images)
 {
+#if defined(LOAD_USER)    
     int i;
+#endif
 #if defined(LOAD_KERNEL)    
     uint64_t kernel_phys_start, kernel_phys_end;
 #endif
+#if defined(LOAD_USER) || defined(LOAD_KERNEL)
     paddr_t next_phys_addr;
     const char *elf_filename;
     unsigned long unused;
+#endif
+#if !defined(LOAD_USER)    
+    (void)max_user_images;
+    (void)num_images;
+#endif
 
+#if defined(LOAD_USER)    
     /* Load kernel. */
     unsigned long cpio_len = _archive_start_end - _archive_start;
+#endif    
 #if defined(LOAD_KERNEL)    
     void *kernel_elf = cpio_get_file(_archive_start, cpio_len, "kernel.elf", &unused);
     if (kernel_elf == NULL) {
@@ -291,15 +303,29 @@ void load_images(struct image_info *kernel_info, struct image_info *user_info,
     next_phys_addr = load_elf("kernel", kernel_elf,
                               (paddr_t)kernel_phys_start, kernel_info, 0, unused, "kernel.bin");
 #endif
-//#if 0
+
+#if !defined(LOAD_KERNEL)    
     kernel_info->phys_region_start = 0x01f80000;
     kernel_info->phys_region_end = 0x2022000;
     kernel_info->virt_region_start = 0xffffffff81f80000;
     kernel_info->virt_region_end = 0xffffffff82022000;
     kernel_info->virt_entry = 0xffffffff82000000;
     kernel_info->phys_virt_offset = 0xffffffff80000000;
-//#endif
-    next_phys_addr = kernel_info->phys_region_end;
+#endif
+    
+    //next_phys_addr = 0x01e80000;
+
+#if !defined(LOAD_USER)    
+    user_info->phys_region_start = 0x01e80000;
+    user_info->phys_region_end = 0x01ee6000;
+    user_info->virt_region_start = 0x0000000000010000;
+    user_info->virt_region_end = 0x0000000000076000;
+    user_info->virt_entry = 0x000000000001ff2e;
+    user_info->phys_virt_offset = 0x01e70000;
+#endif
+#if 0
+phys_region_start: 1e80000phys_region_end: 1ee6000virt_region_start: 10000virt_region_end: 76000virt_entry: 1ff2ephys_virt_offset: 1e70000Jumping to kernel-image entry point...
+#endif
 
     /*
      * Load userspace images.
@@ -314,6 +340,7 @@ void load_images(struct image_info *kernel_info, struct image_info *user_info,
         abort();
     }
 #endif    
+#if defined(LOAD_USER)    
     *num_images = 0;
     for (i = 0; i < max_user_images; i++) {
         /* Fetch info about the next ELF file in the archive. */
@@ -333,6 +360,7 @@ void load_images(struct image_info *kernel_info, struct image_info *user_info,
                                   next_phys_addr, &user_info[*num_images], 1, unused, "app.bin");
         *num_images = i + 1;
     }
+#endif
 }
 
 void __attribute__((weak)) platform_init(void) {}
