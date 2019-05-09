@@ -371,10 +371,10 @@ void load_images(struct image_info *kernel_info, struct image_info *user_info,
              (paddr_t)kernel_phys_start, kernel_info, 0, kernel_filesize, "kernel.bin");
 #endif
 //#if 0
-    kernel_info->phys_region_start = 0x01f80000;
-    kernel_info->phys_region_end = 0x2022000;
-    kernel_info->virt_region_start = 0xffffffff81f80000;
-    kernel_info->virt_region_end = 0xffffffff82022000;
+    kernel_info->phys_region_start = 0x01180000;
+    kernel_info->phys_region_end = 0x2040000;
+    kernel_info->virt_region_start = 0xffffffff81180000;
+    kernel_info->virt_region_end = 0xffffffff82040000;
     kernel_info->virt_entry = 0xffffffff82000000;
     kernel_info->phys_virt_offset = 0xffffffff80000000;
 //#endif
