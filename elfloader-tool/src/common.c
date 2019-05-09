@@ -378,7 +378,7 @@ void load_images(struct image_info *kernel_info, struct image_info *user_info,
     kernel_info->virt_entry = 0xffffffff82000000;
     kernel_info->phys_virt_offset = 0xffffffff80000000;
 //#endif
-    next_phys_addr = 0x01e80000;
+    next_phys_addr = 0x010e8000;
 
     /*
      * Load userspace images.
