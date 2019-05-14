@@ -54,6 +54,10 @@ static void ensure_phys_range_valid(paddr_t paddr_min, paddr_t paddr_max)
 {
     /* Ensure that the kernel physical load address doesn't overwrite us. */
     if (regions_overlap(paddr_min, paddr_max - 1, (word_t)_start, (word_t)_end - 1)) {
+        printf("paddr_min: %lx\n", paddr_min);
+        printf("paddr_max: %lx\n", paddr_max);
+        printf("_start: %lx\n", _start);
+        printf("_end: %lx\n", _end);
         printf("Kernel load address would overlap ELF-loader!\n");
         abort();
     }
