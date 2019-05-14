@@ -297,7 +297,7 @@ void load_images(struct image_info *kernel_info, struct image_info *user_info,
 #endif
 //#if 0
     // ok
-    kernel_info->phys_region_start = 0x012c0000;
+    kernel_info->phys_region_start = 0x010a0000;
     
     // change physical load address: nok
     //kernel_info->phys_region_start = 0x01000000;
@@ -305,7 +305,7 @@ void load_images(struct image_info *kernel_info, struct image_info *user_info,
     kernel_info->phys_region_end = 0x2040000;
 
     // ok
-    kernel_info->virt_region_start = 0xffffffff812c0000;
+    kernel_info->virt_region_start = 0xffffffff810a0000;
 
     // change physical load address: nok
     //kernel_info->virt_region_start = 0xffffffff81000000;
