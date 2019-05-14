@@ -73,6 +73,11 @@ static void ensure_phys_range_valid(char const *const name, paddr_t paddr_min,
      */
     if (regions_overlap(paddr_min, paddr_max - 1, (word_t)_text, (word_t)_end - 1)) {
         printf("%s load address would overlap ELF-loader!\n", name);
+        printf("paddr_min: %lx\n", paddr_min);
+        printf("paddr_max: %lx\n", paddr_max);
+        printf("_start: %lx\n", _start);
+        printf("_end: %lx\n", _end);
+        printf("Kernel load address would overlap ELF-loader!\n");
         abort();
     }
 }
