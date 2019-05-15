@@ -29,6 +29,8 @@
 
 #include "hash.h"
 
+//#define LOAD_USER
+
 /* Determine if two intervals overlap. */
 static int regions_overlap(uintptr_t startA, uintptr_t endA,
                            uintptr_t startB, uintptr_t endB)
@@ -232,7 +234,6 @@ static paddr_t load_elf(const char *name, void *elf, paddr_t dest_paddr,
     }
     return dest_paddr;
 }
-
 /*
  * ELF-loader for ARM systems.
  *
@@ -264,11 +265,17 @@ static paddr_t load_elf(const char *name, void *elf, paddr_t dest_paddr,
 void load_images(struct image_info *kernel_info, struct image_info *user_info,
                  int max_user_images, int *num_images)
 {
+#if defined(LOAD_USER) 
     int i;
+#endif
     uint64_t kernel_phys_start, kernel_phys_end;
     paddr_t next_phys_addr;
     const char *elf_filename;
     unsigned long unused;
+#if !defined(LOAD_USER)    
+    (void)max_user_images;
+    (void)num_images;
+#endif
 
     /* Load kernel. */
     void *kernel_elf = cpio_get_file(_archive_start, "kernel.elf", &unused);
@@ -284,6 +291,11 @@ void load_images(struct image_info *kernel_info, struct image_info *user_info,
     elf_getMemoryBounds(kernel_elf, 1, &kernel_phys_start, &kernel_phys_end);
     next_phys_addr = load_elf("kernel", kernel_elf,
                               (paddr_t)kernel_phys_start, kernel_info, 0, unused, "kernel.bin");
+#if !defined(LOAD_USER)
+    (void)next_phys_addr;
+#endif
+    
+    //next_phys_addr = 0x01e80000;
 
     /*
      * Load userspace images.
@@ -296,6 +308,7 @@ void load_images(struct image_info *kernel_info, struct image_info *user_info,
         printf("Kernel image not first image in archive.\n");
         abort();
     }
+#if defined(LOAD_USER)    
     *num_images = 0;
     for (i = 0; i < max_user_images; i++) {
         /* Fetch info about the next ELF file in the archive. */
@@ -307,7 +320,25 @@ void load_images(struct image_info *kernel_info, struct image_info *user_info,
 
         /* Load the file into memory. */
         next_phys_addr = load_elf(elf_filename, user_elf,
-                                  next_phys_addr, &user_info[*num_images], 1, unused, "app.bin");
+                                  next_phys_addr, &user_info[*num_images], 0, unused, "app.bin");
         *num_images = i + 1;
     }
+#endif
+#if !defined(LOAD_USER)    
+    user_info->phys_region_start = 0x00000000c0027000;
+    user_info->phys_region_end   = 0x00000000c03d5000;
+    user_info->virt_region_start = 0x0000000000010000;
+    user_info->virt_region_end   = 0x00000000003be000;
+    user_info->virt_entry        = 0x000000000003bdbc;
+    user_info->phys_virt_offset  = 0x00000000c0017000;
+#endif
+#if 0
+user image info:
+phys_region_start: ffffffffc0027000
+phys_region_end: ffffffffc03d5000
+virt_region_start: 10000
+virt_region_end: 3be000
+virt_entry: 3bdbc
+phys_virt_offset: ffffffffc0017000
+#endif
 }
