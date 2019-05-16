@@ -295,7 +295,7 @@ void load_images(struct image_info *kernel_info, struct image_info *user_info,
     next_phys_addr = load_elf("kernel", kernel_elf,
                               (paddr_t)kernel_phys_start, kernel_info, 0, unused, "kernel.bin");
 #endif
-//#if 0
+#if !defined(LOAD_KERNEL)
     // ok
     kernel_info->phys_region_start = 0x010a0000;
     
@@ -313,7 +313,7 @@ void load_images(struct image_info *kernel_info, struct image_info *user_info,
     kernel_info->virt_region_end = 0xffffffff82040000;
     kernel_info->virt_entry = 0xffffffff82000000;
     kernel_info->phys_virt_offset = 0xffffffff80000000;
-//#endif
+#endif
     next_phys_addr = 0x01200000;
 
     /*
