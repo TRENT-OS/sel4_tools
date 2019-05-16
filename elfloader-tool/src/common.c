@@ -29,7 +29,7 @@
 
 #include "hash.h"
 
-//#define LOAD_KERNEL
+#define LOAD_KERNEL
 
 /* Determine if two intervals overlap. */
 static int regions_overlap(uintptr_t startA, uintptr_t endA,
