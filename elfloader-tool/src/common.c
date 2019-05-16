@@ -43,7 +43,7 @@ void clear_bss(void)
 
 #define KEEP_HEADERS_SIZE BIT(PAGE_BITS)
 
-//#define LOAD_KERNEL
+#define LOAD_KERNEL
 
 /* Determine if two intervals overlap. */
 static int regions_overlap(uintptr_t startA, uintptr_t endA,

@@ -52,13 +52,11 @@ function(MakeCPIO output_name input_files)
         # - touch -d @0 file sets the modified time to 0
         # - --owner=root:root sets user and group values to 0:0
         # - --reproducible creates reproducible archives with consistent inodes and device numbering
-        if (NOT "`basename ${file}`" MATCHES "kernel")
-            list(
-                APPEND
-                    commands
-                    "bash;-c;cd `dirname ${file}` && mkdir -p temp_${output_name} && cd temp_${output_name} && cp -a ${file} . && touch -d @0 `basename ${file}` && riscv64-unknown-linux-gnu-strip -s `basename ${file}` && echo `basename ${file}` | cpio ${append} ${reproducible_flag} --owner=root:root --quiet -o -H newc --file=${CMAKE_CURRENT_BINARY_DIR}/archive.${output_name}.cpio && rm `basename ${file}` && cd ../ && rmdir temp_${output_name};&&"
+        list(
+            APPEND
+                commands
+                "bash;-c;cd `dirname ${file}` && mkdir -p temp_${output_name} && cd temp_${output_name} && cp -a ${file} . && touch -d @0 `basename ${file}` && riscv64-unknown-linux-gnu-strip -s `basename ${file}` && echo `basename ${file}` | cpio ${append} ${reproducible_flag} --owner=root:root --quiet -o -H newc --file=${CMAKE_CURRENT_BINARY_DIR}/archive.${output_name}.cpio && rm `basename ${file}` && cd ../ && rmdir temp_${output_name};&&"
         )
-        endif()
     endforeach()
     list(APPEND commands "true")
     separate_arguments(cmake_c_flags_sep NATIVE_COMMAND "${CMAKE_C_FLAGS}")
