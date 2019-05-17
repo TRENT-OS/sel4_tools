@@ -156,12 +156,100 @@ static inline void enable_virtual_memory(void)
 
 void printElfInfo ( struct image_info *info )
 {
-    printf ( "phys_region_start: %x", info->phys_region_start );
-    printf ( "phys_region_end: %x", info->phys_region_end );
-    printf ( "virt_region_start: %x", info->virt_region_start );
-    printf ( "virt_region_end: %x", info->virt_region_end );
-    printf ( "virt_entry: %x", info->virt_entry );
-    printf ( "phys_virt_offset: %x", info->phys_virt_offset );
+    printf ( "phys_region_start: %x\n", info->phys_region_start );
+    printf ( "phys_region_end  : %x\n", info->phys_region_end );
+    printf ( "virt_region_start: %x\n", info->virt_region_start );
+    printf ( "virt_region_end  : %x\n", info->virt_region_end );
+    printf ( "virt_entry       : %x\n", info->virt_entry );
+    printf ( "phys_virt_offset : %x\n", info->phys_virt_offset );
+}
+
+int primes() 
+{
+    unsigned int count = 0;
+    unsigned int printCount = 5000;
+
+    for (int i=2; i<10000000; i++) 
+    {
+        int prime=1;
+        for (int j=2; j*j<=i; j++)
+        {
+            if (i % j == 0) 
+            {
+                prime=0;
+                break;    
+            }
+        }   
+        
+        if(prime)
+        {
+            if (++count % printCount == 0)
+            {
+                printf("prime: %d\n", i);
+            }
+        } 
+    }
+
+    return 0;
+}
+
+void memTest()
+{
+    printf("sizeof(char): %d\n", sizeof(char));
+    volatile char *pMem = (char *)0x40000000;
+
+    for (unsigned int k = 0; k < 256; k++)
+    {
+        printf("%p, offset: %x, value: %x\n", pMem, k, pMem[k]);
+    }
+#if 0
+    for (unsigned int k = 0; k < 8 * 1024 * 1024; k++)
+    {
+        if (k % (256 * 1024) == 0)
+        {
+            printf("%p, offset: %x, value: %x\n", pMem, k, pMem[k]);
+        }
+    }
+#endif
+    for (unsigned int k = 0; k < 256; k++)
+    {
+        volatile char ch = (char)(k % 256);
+        
+        pMem[k] = ch;
+        
+        char ch1 = pMem[k];
+
+        printf("%p, offset: %x, written: %d, read: %d\n", pMem, k, ch, ch1);
+    }
+
+    for (unsigned int k = 0; k < 64 * 1024 * 1024; k += 1)
+    {
+        volatile char ch = (char)(k % 256);
+#if 0        
+        if (((k >= 0x8fc8) && (k <= 0x9200)) || 
+            ((k >= 0xe138) && (k <= 0xe238)) ||
+            ((k >= 0xe600) && (k <= 0xe800))
+            )
+        {
+            continue;
+        }
+#endif
+        pMem[k] = ch;
+        
+        char ch1 = pMem[k];
+
+        if (ch != ch1)
+        {
+            printf("%p, offset: %x, written: %d, read: %d\n", pMem, k, ch, ch1);
+        }
+//#if 0
+        if (k % (1 * 1024) == 0)
+        {
+            printf("%p, offset: %x\n", pMem, k);
+        }
+//#endif
+        //printf("%p, offset: %x\n", pMem, k);
+    }
 }
 
 int num_apps = 0;
@@ -171,14 +259,19 @@ void main(UNUSED int hartid, void *bootloader_dtb)
     uint32_t dtb_size = 0;
 
     printf("ELF-loader started on (HART %d) (NODES %d)\n", hartid, CONFIG_MAX_NUM_NODES);
+    //primes();
+    //memTest();
 
     printf("  paddr=[%p..%p]\n", _text, _end - 1);
     /* Unpack ELF images into memory. */
     load_images(&kernel_info, &user_info, 1, &num_apps, bootloader_dtb, &dtb, &dtb_size);
+
+//#if 0
     if (num_apps != 1) {
         printf("No user images loaded!\n");
         abort();
     }
+//#endif
 
     printf("kernel image info:\n");
     printElfInfo ( &kernel_info);
