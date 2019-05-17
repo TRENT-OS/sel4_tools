@@ -79,11 +79,15 @@ static void unpack_elf_to_paddr(void *elf, paddr_t dest_paddr)
     image_size = (size_t)(max_vaddr - min_vaddr);
     phys_virt_offset = dest_paddr - (paddr_t)min_vaddr;
 
+    printf("image_size: %d\n", image_size);
+    printf("dest_paddr: %p\n", dest_paddr);
+
     /* Zero out all memory in the region, as the ELF file may be sparse. */
     memset((char *)dest_paddr, 0, image_size);
 
     /* Load each segment in the ELF file. */
     for (i = 0; i < elf_getNumProgramHeaders(elf); i++) {
+        printf("image index: %d\n", i);
         vaddr_t dest_vaddr;
         size_t data_size, data_offset;
 
@@ -96,6 +100,10 @@ static void unpack_elf_to_paddr(void *elf, paddr_t dest_paddr)
         dest_vaddr = elf_getProgramHeaderVaddr(elf, i);
         data_size = elf_getProgramHeaderFileSize(elf, i);
         data_offset = elf_getProgramHeaderOffset(elf, i);
+
+        printf("(char *)dest_vaddr + phys_virt_offset: %p\n", (char *)dest_vaddr + phys_virt_offset);
+        printf("(char *)elf + data_offset            : %p\n", (char *)elf + data_offset);
+        printf("data_size                            : %d\n", data_size);
 
         /* Load data into memory. */
         memcpy((char *)dest_vaddr + phys_virt_offset,
@@ -185,11 +193,15 @@ static paddr_t load_elf(const char *name, void *elf, paddr_t dest_paddr,
     printf("  vaddr=[%lx..%lx]\n", (vaddr_t)min_vaddr, (vaddr_t)max_vaddr - 1);
     printf("  virt_entry=%lx\n", (vaddr_t)elf_getEntryPoint(elf));
 
+    printf("s00\n");
+
     /* Ensure the ELF file is valid. */
     if (elf_checkFile(elf) != 0) {
         printf("Attempting to load invalid ELF file '%s'.\n", name);
         abort();
     }
+
+    printf("s01\n");
 
     /* Ensure sane alignment of the image. */
     if (!IS_ALIGNED(min_vaddr, PAGE_BITS)) {
@@ -197,11 +209,17 @@ static paddr_t load_elf(const char *name, void *elf, paddr_t dest_paddr,
         abort();
     }
 
+    printf("s02\n");
+
     /* Ensure that we region we want to write to is sane. */
     ensure_phys_range_valid(dest_paddr, dest_paddr + image_size);
 
+    printf("s03\n");
+
     /* Copy the data. */
     unpack_elf_to_paddr(elf, dest_paddr);
+
+    printf("s04\n");
 
     /* Record information about the placement of the image. */
     info->phys_region_start = dest_paddr;
@@ -211,10 +229,13 @@ static paddr_t load_elf(const char *name, void *elf, paddr_t dest_paddr,
     info->virt_entry = (vaddr_t)elf_getEntryPoint(elf);
     info->phys_virt_offset = dest_paddr - (vaddr_t)min_vaddr;
 
+    printf("s05\n");
+
     /* Round up the destination address to the next page */
     dest_paddr = ROUND_UP(dest_paddr + image_size, PAGE_BITS);
 
     if (keep_headers) {
+        printf("s06\n");
         /* Put the ELF headers in this page */
         uint32_t phnum = elf_getNumProgramHeaders(elf);
         uint32_t phsize;
@@ -236,6 +257,7 @@ static paddr_t load_elf(const char *name, void *elf, paddr_t dest_paddr,
         /* return the frame after our headers */
         dest_paddr += BIT(PAGE_BITS);
     }
+    printf("s07\n");
     return dest_paddr;
 }
 
@@ -280,6 +302,7 @@ void load_images(struct image_info *kernel_info, struct image_info *user_info,
 
     /* Load kernel. */
     unsigned long cpio_len = _archive_start_end - _archive_start;
+    printf("cpio_len: %d\n", cpio_len);
 #if defined(LOAD_KERNEL)    
     void *kernel_elf = cpio_get_file(_archive_start, cpio_len, "kernel.elf", &unused);
     if (kernel_elf == NULL) {
@@ -314,7 +337,9 @@ void load_images(struct image_info *kernel_info, struct image_info *user_info,
     kernel_info->virt_entry = 0xffffffff82000000;
     kernel_info->phys_virt_offset = 0xffffffff80000000;
 #endif
-    //next_phys_addr = 0x01200000;
+
+    // INT_STEP_01
+    next_phys_addr = 0x40a00000;
 
     /*
      * Load userspace images.
