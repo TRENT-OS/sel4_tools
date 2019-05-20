@@ -419,7 +419,7 @@ void load_images(struct image_info *kernel_info, struct image_info *user_info,
 #endif
 
     // INT_STEP_01
-    next_phys_addr = 0x40a00000;
+    next_phys_addr = 0x40280000;
 
     /*
      * Load userspace images.
