@@ -285,6 +285,8 @@ void load_images(struct image_info *kernel_info, struct image_info *user_info,
     elf_getMemoryBounds(kernel_elf, 1, &kernel_phys_start, &kernel_phys_end);
     next_phys_addr = load_elf("kernel", kernel_elf,
                               (paddr_t)kernel_phys_start, kernel_info, 0, unused, "kernel.bin");
+    // Load user image (somewhere) to external RAM
+    next_phys_addr = 0x40280000;
 
     /*
      * Load userspace images.
