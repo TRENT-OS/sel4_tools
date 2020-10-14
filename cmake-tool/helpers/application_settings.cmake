@@ -101,6 +101,7 @@ function(correct_platform_strings)
         correct_platform_strings_platform_aliases
         sabre
         wandq
+        nitrogen6sx
         kzm
         rpi3
         exynos5250
@@ -121,6 +122,9 @@ function(correct_platform_strings)
     elseif("${PLATFORM}" STREQUAL "wandq")
         set(KernelPlatform imx6 CACHE STRING "" FORCE)
         set(KernelARMPlatform wandq CACHE STRING "" FORCE)
+    elseif("${PLATFORM}" STREQUAL "nitrogen6sx")
+        set(KernelPlatform imx6 CACHE STRING "" FORCE)
+        set(KernelARMPlatform nitrogen6sx CACHE STRING "" FORCE)
     elseif("${PLATFORM}" STREQUAL "kzm")
         set(KernelPlatform imx31 CACHE STRING "" FORCE)
     elseif("${PLATFORM}" STREQUAL "rpi3")

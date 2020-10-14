@@ -7,7 +7,13 @@
 #include <autoconf.h>
 #include <elfloader/gen_config.h>
 
+#if defined(CONFIG_PLAT_IMX6DQ)
 #define VECTOR_BASE     0x10000000
+#elif defined(CONFIG_PLAT_IMX6SX)
+#define VECTOR_BASE     0x80000000
+#else
+#error "unknown i.MX6 SOC"
+#endif
 #define STACK_TOP       (VECTOR_BASE + (1 << 12) - 0x10)
 
 /* vector table for monitor mode
