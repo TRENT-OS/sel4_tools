@@ -398,6 +398,17 @@ int load_images(
     void const *cpio = _archive_start;
     size_t cpio_len = _archive_start_end - _archive_start;
 
+    printf("!!\n");
+    printf("!! sizeof(void *)       is  %u\n", sizeof(void *));
+    printf("!! sizeof(size_t)       is  %u\n", sizeof(size_t));
+    printf("!! sizeof(uintptr_t)    is  %u\n", sizeof(uintptr_t));
+    printf("!! PRIu64               is  '%s'\n", PRIu64);
+    printf("!! PRIuPTR              is  '%s'\n", PRIuPTR);
+    printf("!! PRIuMAX              is  '%s'\n", PRIuMAX);
+    printf("!! sizeof(word_t)       is  %u\n", sizeof(word_t));
+    printf("!! BYTE_PER_WORD        is  %u\n", BYTE_PER_WORD);
+    printf("!!\n");
+
     /* Load kernel. */
     unsigned long cpio_file_size = 0;
     void const *kernel_elf_blob = cpio_get_file(cpio,
