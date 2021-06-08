@@ -34,7 +34,7 @@ WEAK int plat_cpu_on(struct elfloader_cpu *cpu, void *entry, void *stack)
 
     if (cpu->enable_method == NULL || dev_get_smp(smp_ops)->enable_method == NULL) {
         /* if cpu has a NULL enable_method, expect a driver with a NULL enable_method too */
-        if (cpu->enable_method != NULL || dev_get_smp(smp_ops)-> enable_method != NULL) {
+        if (cpu->enable_method != NULL || dev_get_smp(smp_ops)->enable_method != NULL) {
             return -1;
         }
     } else if (strcmp(cpu->enable_method, dev_get_smp(smp_ops)->enable_method)) {
