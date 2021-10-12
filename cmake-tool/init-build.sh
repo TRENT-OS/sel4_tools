@@ -51,5 +51,8 @@ else
     real_easy_settings="$(realpath $SCRIPT_PATH/easy-settings.cmake)"
     project_dir="$(dirname $real_easy_settings)"
     # Initialize CMake.
-    cmake -G Ninja "$@" -DSEL4_CACHE_DIR="$CACHE_DIR" -C "$project_dir/settings.cmake" "$project_dir"
+#    cmake -G Ninja "$@" -DSEL4_CACHE_DIR="$CACHE_DIR" -C "$project_dir/settings.cmake" "$project_dir"
+#    cmake -G Ninja "$@" -DSEL4_CACHE_DIR="$CACHE_DIR" -C "$project_dir/settings.cmake" --debug-output --trace --debug-trycompile "$project_dir"
+     cmake -G Ninja "$@" -DSEL4_CACHE_DIR="$CACHE_DIR" -C "$project_dir/settings.cmake" --debug-output --trace --trace-expand --debug-trycompile "$project_dir"
+#    cmake -G Ninja "$@" -DSEL4_CACHE_DIR="$CACHE_DIR" -C "$project_dir/settings.cmake" --debug-output --trace --trace-source=camkes.camke --trace-expand --debug-trycompile "$project_dir"
 fi
