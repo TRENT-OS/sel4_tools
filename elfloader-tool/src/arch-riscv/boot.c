@@ -344,11 +344,31 @@ void main(word_t hart_id, void *bootloader_dtb)
      */
     acquire_multicore_lock();
     set_secondary_cores_go();
-    word_t i = 0;
-    while (i < CONFIG_MAX_NUM_NODES && hsm_exists) {
-        i++;
-        if (i != hart_id) {
-            sbi_hart_start(i, secondary_harts, i);
+    /* Start all cores */
+    if (!hsm_exists) {
+        /* Without the HSM extension, we can't start the cores explicitly. But
+         * they might be running already, so we do nothing here and just hope
+         * things work out. If the secondary cores don't start we are stuck.
+         */
+        printf("no HSM extension, let's hope secondary cores have been started\n");
+    } else {
+        /* Start all cores */
+        for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
+            word_t remote_hart_id = i + 1; /* hart IDs start at 1 */
+            if (remote_hart_id != hart_id) {
+                /* The remote's hart ID is passed as custom parameter, but this
+                 * value is not used anywhere at the moment.
+                 */
+                sbi_hsm_ret_t ret = sbi_hart_start(remote_hart_id,
+                                                   secondary_harts,
+                                                   remote_hart_id);
+                if (SBI_SUCCESS != ret.code) {
+                    printf("ERROR: could not start hart %"PRIu_word", failure"
+                           " (%d, %d)\n", remote_hart_id, ret.code, ret.data);
+                    abort();
+                    UNREACHABLE();
+                }
+            }
         }
     }
 
