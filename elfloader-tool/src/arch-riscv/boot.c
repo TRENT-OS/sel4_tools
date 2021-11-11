@@ -166,11 +166,10 @@ static int map_kernel_window(struct image_info *kernel_info)
     return 0;
 }
 
-int hsm_exists = 0; /* assembly startup code will initialise this */
-
 #if CONFIG_MAX_NUM_NODES > 1
 
-extern void secondary_harts(word_t hart_id, word_t core_id);
+/* entry if secondary harts are started via SBI HSM extension */
+extern void hsm_start_secondary_core(word_t hart_id, word_t core_id);
 
 int secondary_go = 0;
 int next_logical_core_id = 1; /* incremented by assembly code  */
@@ -318,13 +317,22 @@ NORETURN void boot_hart(word_t hart_id, word_t core_id)
     UNREACHABLE();
 }
 
-void main(word_t hart_id, void *bootloader_dtb)
+void main(word_t hart_id, void *bootloader_dtb, word_t hsm_exists)
 {
     /* Printing uses SBI, so there is no need to initialize any UART. */
-    printf("ELF-loader started on (HART %"PRIu_word") (NODES %d)\n",
-           hart_id, (unsigned int)CONFIG_MAX_NUM_NODES);
+    printf("ELF-loader started on hart %"PRIu_word"\n", hart_id);
+    printf("  MAX_NUM_NODES: %u, SBI HSM extension: %s\n",
+           (unsigned int)CONFIG_MAX_NUM_NODES,
+           hsm_exists ? "available" : "missing");
+    printf("  phys area of binary: [%p..%p]\n", _text, _end - 1);
+    printf("  DTB from bootloader: %p\n", bootloader_dtb);
 
-    printf("  paddr=[%p..%p]\n", _text, _end - 1);
+    if (hart_id != CONFIG_FIRST_HART_ID) {
+        printf("ERROR: ELF-loader not is running on FIRST_HART_ID (%d)\n",
+               (unsigned int)CONFIG_FIRST_HART_ID);
+        abort();
+        UNREACHABLE();
+    }
 
     /* Load the ELF images and setup the MMU tables. */
     int ret = run_elfloader(bootloader_dtb);
@@ -352,16 +360,24 @@ void main(word_t hart_id, void *bootloader_dtb)
          */
         printf("no HSM extension, let's hope secondary cores have been started\n");
     } else {
-        /* Start all cores */
+        /* If we are running on a platform with SBI HSM extension support, no
+         * other hart is running. The system start in a random hart, but the
+         * assembly startup code has done the migration to the designated
+         * primary hart already. The global variable logical_core_id must be
+         * untpuched here, otherwise something is badly wrong.
+         */
+        if (1 != next_logical_core_id) {
+            printf("ERROR: logical core IDs have been assigned already\n");
+            abort();
+            UNREACHABLE();
+        }
         for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
             word_t remote_hart_id = i + 1; /* hart IDs start at 1 */
             if (remote_hart_id != hart_id) {
-                /* The remote's hart ID is passed as custom parameter, but this
-                 * value is not used anywhere at the moment.
-                 */
+                /* start a secondary core and pass a unique logical core ID */
                 sbi_hsm_ret_t ret = sbi_hart_start(remote_hart_id,
-                                                   secondary_harts,
-                                                   remote_hart_id);
+                                                   hsm_start_secondary_core,
+                                                   next_logical_core_id++);
                 if (SBI_SUCCESS != ret.code) {
                     printf("ERROR: could not start hart %"PRIu_word", failure"
                            " (%d, %d)\n", remote_hart_id, ret.code, ret.data);
