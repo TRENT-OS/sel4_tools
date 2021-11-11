@@ -9,8 +9,11 @@
 
 .extern main
 .extern __global_pointer$
-.extern elfloader_stack_alloc
+.extern elfloader_stack
 .extern hsm_exists
+#if CONFIG_MAX_NUM_NODES > 1
+.extern next_logical_core_id
+#endif
 
 #define BIT(n) (1 << (n))
 
@@ -110,7 +113,7 @@ _start1: /* a0 must hold current hard ID passed by bootloader */
   li s0, CONFIG_FIRST_HART_ID
   bne  a0, s0, secondary_harts
 
-  la sp, (elfloader_stack_alloc + BIT(12))
+  la sp, (elfloader_stack + BIT(CONFIG_KERNEL_STACK_BITS))
   /* The C code expects the registers to be set up as:
    *   a0 = hart id
    *   a1 = dtb
@@ -119,15 +122,6 @@ _start1: /* a0 must hold current hard ID passed by bootloader */
   la s0, main
   jr s0
 
-#if CONFIG_MAX_NUM_NODES > 1
-.extern next_logical_core_id
-.data
-bootstack_secondary_cores:
-.align 12
-.space 4096 * (CONFIG_MAX_NUM_NODES - 1)
-#endif
-
-.text
 
 .global secondary_harts
 secondary_harts:
@@ -141,14 +135,14 @@ secondary_harts:
 #if CONFIG_MAX_NUM_NODES > 1
   la a1, next_logical_core_id
   li t2, 1
-  amoadd.w t0, t2, (a1)
+  amoadd.w a1, t2, (a1)
   /* now a1 has the logical core id */
   li t2, CONFIG_MAX_NUM_NODES
-  bge t0, t2, spin_hart
-
-  mv a1, t0
-  slli t0, t0, 12
-  la sp, bootstack_secondary_cores
+  bge a1, t2, spin_hart
+  /* setup the core specific stack pointer */
+  la sp, elfloader_stack
+  addi t0, a1, 1 /* increment by one because we need to set sp to the end */
+  slli t0, t0, CONFIG_KERNEL_STACK_BITS /* t0 = t0 * BIT(CONFIG_KERNEL_STACK_BITS) */
   add sp, sp, t0
   la s0, secondary_entry
   jr s0
