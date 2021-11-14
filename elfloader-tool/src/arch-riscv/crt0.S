@@ -21,6 +21,7 @@
 /* SBI commands */
 #define SBI_HSM_BASE 0x48534DULL
 #define SBI_HSM_BASE_HART_START 0
+#define SBI_HSM_BASE_HART_STOP 1
 #define SBI_EXT_BASE 0x10
 #define SBI_EXT_BASE_PROBE_EXT 3
 
@@ -95,13 +96,13 @@ hsm_switch_hart:
   la a1, _start1 /* where to start the hart */
   li a2, 0 /* logical hart_id to be passed in a1 when new hart starts */
   ecall /* call SBI to start hart FIRST_HART_ID */
-
-  /* Since we are not the designated primary hart, continue the boot process as
-   * secondary hart
-   */
-  mv a0, s0 /* restore a0 to hold hart ID passed by OpenSBI */
-  j secondary_harts
-
+  /* Stop current hart, the boot code may bring it up again when needed. */
+  li a7, SBI_HSM_BASE
+  li a6, SBI_HSM_BASE_HART_STOP
+  ecall /* this call is not supposed to return */
+hsm_switch_hart_error:
+  wfi
+  j hsm_switch_hart_error
 
 _start1: /* a0 must hold current hard ID passed by bootloader */
 
