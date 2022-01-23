@@ -1,5 +1,6 @@
 #
 # Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+# Copyright 2021, HENSOLDT Cyber
 #
 # SPDX-License-Identifier: BSD-2-Clause
 #
@@ -32,7 +33,7 @@ mark_as_advanced(UIMAGE_TOOL)
 include(CMakeDependentOption)
 cmake_dependent_option(UseRiscVOpenSBI "Use OpenSBI." ON DEPENDS "KernelArchRiscV" OFF)
 
-if(UseRiscVOpenSBI)
+if(KernelRiscvSBI_OpenSBI)
     set(OPENSBI_PATH "${CMAKE_SOURCE_DIR}/tools/opensbi" CACHE STRING "OpenSBI Folder location")
     mark_as_advanced(FORCE OPENSBI_PATH)
 endif()
@@ -91,8 +92,17 @@ function(DeclareRootserver rootservername)
             "${CMAKE_BINARY_DIR}/images/${rootservername}-image-${KernelArch}-${KernelPlatform}"
         )
         set(elf_target_file $<TARGET_FILE:elfloader>)
+
         if(KernelArchRiscV)
-            if(UseRiscVOpenSBI)
+
+            if(KernelRiscvSBI_None)
+                # don't use SBI
+
+            elseif(KernelRiscvSBI_ROM)
+                # SBI already available on platform (e.g.in ROM)
+                message(NOTICE "SBI already available in ROM")
+
+            elseif(KernelRiscvSBI_OpenSBI)
                 # When using OpenSBI, the whole system image (usually consisting
                 # of the ELF-Loader, a device tree, the kernel, and a userland)
                 # is packaged as an OpenSBI payload.
@@ -146,13 +156,20 @@ function(DeclareRootserver rootservername)
                         PLATFORM_RISCV_XLEN=${OPENSBI_PLAT_XLEN}
                         PLATFORM_RISCV_ISA=${OPENSBI_PLAT_ISA}
                         PLATFORM_RISCV_ABI=${OPENSBI_PLAT_ABI} FW_PAYLOAD_PATH="${OPENSBI_PLAYLOAD}"
+                        FW_PAYLOAD_OFFSET=0x04000000
                     DEPENDS "${elf_target_file}" elfloader ${USES_TERMINAL_DEBUG}
                 )
                 # overwrite elf_target_file, it's no longer the ElfLoader but
                 # the OpenSBI ELF (which contains the ElfLoader as payload)
                 set(elf_target_file "${OPENSBI_SYSTEM_IMAGE_ELF}")
+
+            else()
+                message(FATAL_ERROR "unknown RISC-V SBI, KernelRiscVSBI='${KernelRiscVSBI}'")
+
             endif()
-        endif()
+
+        endif() # KernelArchRiscV
+
         set(binary_efi_list "binary;efi")
         if(${ElfloaderImage} IN_LIST binary_efi_list)
             # If not an elf we construct an intermediate rule to do an objcopy to binary

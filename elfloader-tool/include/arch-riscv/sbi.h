@@ -1,9 +1,18 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright 2021, HENSOLDT Cyber
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
+
 #pragma once
+
+#include <autoconf.h>
+#include <elfloader/gen_config.h>
+
+#if defined(RISCV_SBI_NONE)
+    /* If there is no SBI, the there is nothing here. */
+#else
 
 #include <elfloader_common.h>
 #include <types.h>
@@ -75,9 +84,6 @@ typedef struct {
 
 static inline void sbi_console_putchar(int ch)
 {
-    /* OpenSBI implements a generic console, it hides any UART specific details
-     * like writing a '\r' (CR) before a '\n' (LF).
-     */
     SBI_CALL_1(SBI_CONSOLE_PUTCHAR, ch);
 }
 
@@ -139,3 +145,5 @@ static inline sbi_hsm_ret_t sbi_hart_start(const word_t hart_id,
     SBI_HSM_CALL(SBI_HSM_HART_START, hart_id, start, arg, ret);
     return ret;
 }
+
+#endif /* [not] defined(RISCV_SBI_NONE) */
