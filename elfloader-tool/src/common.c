@@ -29,6 +29,8 @@
 #include <platform_info.h> // this provides memory_region
 #endif
 
+#define KEEP_HEADERS_SIZE BIT(PAGE_BITS)
+
 extern char _bss[];
 extern char _bss_end[];
 
@@ -44,8 +46,6 @@ void clear_bss(void)
         start++;
     }
 }
-
-#define KEEP_HEADERS_SIZE BIT(PAGE_BITS)
 
 /*
  * Determine if two intervals overlap.
