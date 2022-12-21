@@ -595,6 +595,11 @@ int load_images(
         .size = _archive_start_end - _archive_start,
     };
 
+    /* Set defaults. */
+    if (num_images) {
+        *num_images = 0;
+    }
+
     /* Load kernel. */
     blob_t kernel_elf_blob;
     ret = cpio_blob_get_file(&cpio_blob, "kernel.elf", &kernel_elf_blob);
@@ -717,7 +722,6 @@ int load_images(
 
 #endif /* CONFIG_ELFLOADER_ROOTSERVERS_LAST */
 
-    *num_images = 0;
     for (unsigned int i = 0; i < max_user_images; i++) {
         printf("loading image #%d\n", i);
         /* Fetch info about the next ELF file in the archive. */
