@@ -417,7 +417,7 @@ static int cpio_blob_load_elf(
         return -1;
     }
 
-    /* Ensure that we region we want to write to is sane. */
+    /* Ensure that the region we want to write to is sane. */
     ret = ensure_phys_range_valid(dest_paddr, dest_paddr + image_size);
     if (0 != ret) {
         printf("ERROR: Physical address range invalid\n");
@@ -689,8 +689,9 @@ int load_images(
 
 #ifdef CONFIG_ELFLOADER_ROOTSERVERS_LAST
 
-    /* work out the size of the user images - this corresponds to how much
-     * memory load_elf uses */
+    /* calculate the size of the user images - this corresponds to how much
+     * memory load_elf uses
+     */
     unsigned int total_user_image_size = 0;
     for (unsigned int i = 0; i < max_user_images; i++) {
         blob_t user_blob = {0};
@@ -710,8 +711,7 @@ int load_images(
         total_user_image_size += image_size + KEEP_HEADERS_SIZE;
     }
 
-    /* work out where to place the user image */
-
+    /* calculate location if the the user image */
     next_phys_addr = ROUND_DOWN(memory_region[0].end, PAGE_BITS)
                      - ROUND_UP(total_user_image_size, PAGE_BITS);
 
