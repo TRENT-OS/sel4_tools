@@ -214,6 +214,9 @@ void continue_boot(int was_relocated)
         printf("Jumping to kernel-image entry point...\n\n");
     }
 
+    /* cast address at 'kernel_info.virt_entry' into function pointer of type 'init_arm_kernel_t'
+     * and invoke the function
+     */
     ((init_arm_kernel_t)kernel_info.virt_entry)(user_info.phys_region_start,
                                                 user_info.phys_region_end,
                                                 user_info.phys_virt_offset,

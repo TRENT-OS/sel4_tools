@@ -22,11 +22,11 @@
 .extern _boot_pgd_down
 
 BEGIN_FUNC(disable_caches_hyp)
-    stp     x29, x30, [sp, #-16]!
-    mov     x29, sp
-    bl      flush_dcache
-    disable_id_cache sctlr_el2, x9
-    ldp     x29, x30, [sp], #16
+    stp     x29, x30, [sp, #-16]!                   /* push 'x29' and 'x30' onto the stack - set 'sp' to 'sp-16', then store 'x29' to 'sp' and 'x30' to 'sp+8' */
+    mov     x29, sp                                 /* copy the address stored in register 'x19' to 'sp' */
+    bl      flush_dcache                            /* branch to label 'flush_dcache' - subroutine call, so set 'x30' to PC+4 */
+    disable_id_cache sctlr_el2, x9                  /* call function 'disable_id_cache' */
+    ldp     x29, x30, [sp], #16                     /* pop 'x29' and 'x30' from the stack - set 'x29' to 'sp' and 'x30' to 'sp+8', then set 'sp' to 'sp+16' */
     ret
 END_FUNC(disable_caches_hyp)
 

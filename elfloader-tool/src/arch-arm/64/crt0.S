@@ -16,34 +16,36 @@
 
 .section ".text.start"
 BEGIN_FUNC(_start)
-    adrp    x19, core_stack_alloc
-    add     x19, x19, #0xff0
-    mov     sp, x19
+    adrp    x19, core_stack_alloc       /* first set register 'x19' to point to the start of the page that holds 'core_stack_alloc' */
+    add     x19, x19, #0xff0            /* then add the page offset (#0xff0) to get the address of 'core_stack_alloc' */
+    mov     sp, x19                     /* copy the address stored in register 'x19' to 'sp' */
 #ifdef CONFIG_IMAGE_BINARY
-    stp     x0, x1, [sp, #-16]!
-    bl      clear_bss
+    stp     x0, x1, [sp, #-16]!         /* push 'x0' and 'x1' onto the stack - store 'x0' to 'sp-16' and 'x1' to 'sp-16+8', then set 'sp' to 'sp-16' */
+    bl      clear_bss                   /* branch to label 'clear_bss' - subroutine call, so set 'x30' to PC+4 */
     /*
      * Binary images may not be loaded in the correct location.
      * Try and move ourselves so we're in the right place.
      */
-    bl      fixup_image_base
-    mov     x2, x0
+    bl      fixup_image_base            /* branch to label 'fixup_image_base' - subroutine call, so set 'x30' to PC+4 */
+    mov     x2, x0                      /* copy content from 'x0' to 'x2' */
     /* restore original arguments for next step */
-    ldp     x0, x1, [sp, #-16]!
+    ldp     x0, x1, [sp, #-16]!         /* pop 'x0' and 'x1' from the stack - load 'x0' from 'sp-16' and 'x1' from 'sp-16+8', then set 'sp' to 'sp-16' */
+    /* ldp     x0, x1, [sp], #16 */     /* QUESTION: doesn't it rather have to be formulated like this ??? - load 'x0' from 'sp' and 'x1' from 'sp+8', then set 'sp' to 'sp+16' */
+
     /* fixup_image_base returns 1 if no need to move */
-    cmp     x2, #1
-    beq     1f
+    cmp     x2, #1                      /* compare content of register 'x2' to immediate (1) */
+    beq     1f                          /* branch if equal - jump 'forward' to label '1' */
     /* otherwise, jump to the start of the new elfloader */
 
-    br      x2
+    br      x2                          /* branch to address in register 'x2' - no subroutine return */
 1:
 #endif
-    b       main
+    b       main                        /* branch to label 'main' - no subroutine call or return */
 END_FUNC(_start)
 
 #ifdef CONFIG_IMAGE_BINARY
 BEGIN_FUNC(fixup_image_base)
-    stp     x29, x30, [sp, #-16]!
+    stp     x29, x30, [sp, #-16]!       /* push 'x29' and 'x30' onto the stack - set 'sp' to 'sp-16', then store 'x29' to 'sp' and 'x30' to 'sp+8' */
     mov     x29, sp
     ldr     x0, =IMAGE_START_ADDR
     adr     x1, _start
@@ -100,7 +102,7 @@ image_ok:
     /* already in the right place, just keep booting */
     mov x0, #1
 1:
-    ldp     x29, x30, [sp], #16
+    ldp     x29, x30, [sp], #16     /* pop 'x29' and 'x30' from the stack - set 'x29' to 'sp' and 'x30' to 'sp+8', then set 'sp' to 'sp+16' */
     ret
 END_FUNC(fixup_image_base)
 #endif
