@@ -108,7 +108,7 @@ void main(UNUSED void *arg)
     platform_init();
 
     /* Print welcome message. */
-    printf("\nELF-loader started on ");
+    printf("\nELF-loader started in EL%d on ", get_cpu_mode());
     print_cpuid();
     printf("  paddr=[%p..%p]\n", _text, _end - 1);
 
