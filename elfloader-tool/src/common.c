@@ -31,6 +31,11 @@
 #include <platform_info.h> // this provides memory_region
 #endif
 
+/* For user images, some the ELF header information is kept in a page after the
+ * loaded ELF.
+ */
+#define KEEP_HEADERS_SIZE BIT(PAGE_BITS)
+
 extern char _bss[];
 extern char _bss_end[];
 
@@ -46,8 +51,6 @@ void clear_bss(void)
         start++;
     }
 }
-
-#define KEEP_HEADERS_SIZE BIT(PAGE_BITS)
 
 /*
  * Determine if two intervals overlap.
@@ -253,7 +256,6 @@ static int load_elf(
     size_t elf_blob_size,
     char const *elf_hash_filename,
     paddr_t dest_paddr,
-    int keep_headers,
     struct image_info *info,
     paddr_t *next_phys_addr)
 {
@@ -344,29 +346,6 @@ static int load_elf(
 
     /* Round up the destination address to the next page */
     dest_paddr = ROUND_UP(dest_paddr + image_size, PAGE_BITS);
-
-    if (keep_headers) {
-        /* Put the ELF headers in this page */
-        uint32_t phnum = elf_getNumProgramHeaders(elf_blob);
-        uint32_t phsize;
-        paddr_t source_paddr;
-        if (ISELF32(elf_blob)) {
-            phsize = ((struct Elf32_Header const *)elf_blob)->e_phentsize;
-            source_paddr = (paddr_t)elf32_getProgramHeaderTable(elf_blob);
-        } else {
-            phsize = ((struct Elf64_Header const *)elf_blob)->e_phentsize;
-            source_paddr = (paddr_t)elf64_getProgramHeaderTable(elf_blob);
-        }
-        /* We have no way of sharing definitions with the kernel so we just
-         * memcpy to a bunch of magic offsets. Explicit numbers for sizes
-         * and offsets are used so that it is clear exactly what the layout
-         * is */
-        memcpy((void *)dest_paddr, &phnum, 4);
-        memcpy((void *)(dest_paddr + 4), &phsize, 4);
-        memcpy((void *)(dest_paddr + 8), (void *)source_paddr, phsize * phnum);
-        /* return the frame after our headers */
-        dest_paddr += KEEP_HEADERS_SIZE;
-    }
 
     if (next_phys_addr) {
         *next_phys_addr = dest_paddr;
@@ -578,7 +557,6 @@ int load_images(
                    kernel_elf_blob_size,
                    "kernel.bin", // hash file
                    (paddr_t)kernel_phys_start,
-                   0, // don't keep ELF headers
                    kernel_info,
                    NULL); // we have calculated next_phys_addr already
 
@@ -675,12 +653,31 @@ int load_images(
                        elf_filesize,
                        "app.bin", // hash file
                        next_phys_addr,
-                       1,  // keep ELF headers
                        &user_info[*num_images],
                        &next_phys_addr);
         if (0 != ret) {
             printf("ERROR: Could not load user image ELF\n");
         }
+
+        /* Keep ELF header information in a page afterwards. */
+        uint32_t phnum = elf_getNumProgramHeaders(user_elf);
+        uint32_t phsize;
+        paddr_t source_paddr;
+        if (ISELF32(user_elf)) {
+            phsize = ((struct Elf32_Header const *)user_elf)->e_phentsize;
+            source_paddr = (paddr_t)elf32_getProgramHeaderTable(user_elf);
+        } else {
+            phsize = ((struct Elf64_Header const *)user_elf)->e_phentsize;
+            source_paddr = (paddr_t)elf64_getProgramHeaderTable(user_elf);
+        }
+        /* We have no way of sharing definitions with the kernel so we just
+         * memcpy to a bunch of magic offsets. Explicit numbers for sizes and
+         * offsets are used so that it is clear exactly what the layout is
+         */
+        memcpy((void *)next_phys_addr, &phnum, 4);
+        memcpy((void *)(next_phys_addr + 4), &phsize, 4);
+        memcpy((void *)(next_phys_addr + 8), (void *)source_paddr, phsize * phnum);
+        next_phys_addr += KEEP_HEADERS_SIZE;
 
         *num_images = i + 1;
     }
