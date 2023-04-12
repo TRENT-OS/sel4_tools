@@ -44,7 +44,16 @@ function(MakeCPIO output_name input_files)
         set(archive_symbol ${MAKE_CPIO_CPIO_SYMBOL})
     endif()
 
-    set(cpio_archive "${CMAKE_CURRENT_BINARY_DIR}/archive.${output_name}.cpio")
+    get_filename_component(cpio_lib_name "${output_name}" NAME)
+    get_filename_component(cpio_lib_dir "${output_name}" DIRECTORY)
+    if(NOT cpio_lib_dir)
+        set(cpio_lib_dir "${CMAKE_CURRENT_BINARY_DIR}")
+    else()
+        set(cpio_lib_dir "${CMAKE_CURRENT_BINARY_DIR}/${cpio_lib_dir}")
+    endif()
+
+    # intermediate files
+    set(cpio_archive "${cpio_lib_dir}/${cpio_lib_name}.cpio")
 
     # Create a script that prepares CPIO archive contents in a tmp folder and
     # then builds the archive. We have to pass the files to cpio in the same
@@ -55,7 +64,7 @@ function(MakeCPIO output_name input_files)
     # "touch -date  @0 <file>" the 'modified time' is set to 0. The cpio
     # parameter "--owner=+0:+0" sets user and group values to 0:0.
     CheckCPIOArgument(cpio_reproducible_flag "--reproducible")
-    set(cpio_archive_creator "${CMAKE_CURRENT_BINARY_DIR}/${output_name}.sh")
+    set(cpio_archive_creator "${cpio_lib_dir}/${cpio_lib_name}.sh")
     file(
         WRITE
             "${cpio_archive_creator}"
@@ -74,7 +83,7 @@ function(MakeCPIO output_name input_files)
 
     # Create a "program" that makes the compiler generate and object file that
     # contains the cpio archive.
-    set(cpio_archive_s "${CMAKE_CURRENT_BINARY_DIR}/${output_name}.S")
+    set(cpio_archive_s "${cpio_lib_dir}/${cpio_lib_name}.S")
     file(
         WRITE
             "${cpio_archive_s}"
