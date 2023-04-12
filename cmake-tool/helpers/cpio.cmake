@@ -44,52 +44,79 @@ function(MakeCPIO output_name input_files)
         set(archive_symbol ${MAKE_CPIO_CPIO_SYMBOL})
     endif()
 
-    # intermediate files
-    set(cpio_archive "archive.${output_name}.cpio")
-    set(cpio_archive_s "${output_name}.S")
+    set(cpio_archive "${CMAKE_CURRENT_BINARY_DIR}/archive.${output_name}.cpio")
 
-    # Check that the reproducible flag is available. Don't use it if it isn't.
+    # Create a script that prepares CPIO archive contents in a tmp folder and
+    # then builds the archive. We have to pass the files to cpio in the same
+    # order as we go them, because some application will access the contents by
+    # index  and not by name.
+    # For some cpio versions "--reproducible" is available, if this is the case
+    # the archive is created with consistent inodes and device numbering. With
+    # "touch -date  @0 <file>" the 'modified time' is set to 0. The cpio
+    # parameter "--owner=+0:+0" sets user and group values to 0:0.
     CheckCPIOArgument(cpio_reproducible_flag "--reproducible")
-    set(
-        cpio_cmd
-        "cpio ${cpio_reproducible_flag} --quiet --create --format=newc --file=${CMAKE_CURRENT_BINARY_DIR}/${cpio_archive}"
+    set(cpio_archive_creator "${CMAKE_CURRENT_BINARY_DIR}/${output_name}.sh")
+    file(
+        WRITE
+            "${cpio_archive_creator}"
+            "#!/usr/bin/env bash\n"
+            "# auto-generated file from MakeCPIO(), do not edit\n"
+            "TMP_DIR=temp_${output_name}\n"
+            "mkdir -p \${TMP_DIR}\n"
+            "cp -a \"$@\" \${TMP_DIR}/\n"
+            "(\n"
+            "  cd \${TMP_DIR}\n"
+            "  touch --date @0 *\n"
+            "  printf '%s\\n' \${@##*/} | cpio ${cpio_reproducible_flag} --quiet --create --format=newc --owner=+0:+0\n"
+            ") >${cpio_archive}\n"
+            "rm -rf \${TMP_DIR}\n"
     )
 
-    set(tmp_dir "temp_${output_name}")
-    set(commands "bash;-c;${cpio_cmd};&&")
-    foreach(file IN LISTS input_files)
-        # Try and generate reproducible cpio meta-data as we do this:
-        # - touch -d @0 file sets the modified time to 0
-        # - --owner=root:root sets user and group values to 0:0
-        # - --reproducible creates reproducible archives with consistent inodes and device numbering
-        list(
-            APPEND
-                commands
-                "bash;-c; mkdir -p ${tmp_dir} && cd ${tmp_dir} && cp -a ${file} . && touch -d @0 `basename ${file}` && echo `basename ${file}` | ${cpio_cmd} --append --owner=+0:+0 && rm `basename ${file}` && cd ../ && rmdir ${tmp_dir};&&"
-        )
-    endforeach()
-    list(APPEND commands "true")
+    # Create a "program" that makes the compiler generate and object file that
+    # contains the cpio archive.
+    set(cpio_archive_s "${CMAKE_CURRENT_BINARY_DIR}/${output_name}.S")
+    file(
+        WRITE
+            "${cpio_archive_s}"
+            "# auto-generated file from MakeCPIO(), do not edit\n"
+            ".section ._archive_cpio, \"aw\"\n"
+            ".globl ${archive_symbol}, ${archive_symbol}_end\n"
+            "${archive_symbol}:\n"
+            ".incbin \"${cpio_archive}\"\n"
+            "${archive_symbol}_end:\n"
+    )
+
+    # Re-run CMake configuration in case ${cpio_archive_s} is deleted
+    set_property(
+        DIRECTORY
+        APPEND
+        PROPERTY CMAKE_CONFIGURE_DEPENDS "${cpio_archive_creator}" "${cpio_archive_s}"
+    )
+
+    # The 'cpio_archive' is no explicit parameter for the command, because it is
+    # hard-coded already in the specific script we have generated above. The
+    # 'input_files' are explicit here, because they are a CMake list that
+    # will be converted to parameters for the invokation,
+    add_custom_command(
+        OUTPUT ${cpio_archive}
+        COMMAND bash "${cpio_archive_creator}" ${input_files}
+        DEPENDS "${cpio_archive_creator}" ${input_files} ${MAKE_CPIO_DEPENDS}
+        COMMENT "Generate CPIO archive ${cpio_archive}"
+    )
 
     separate_arguments(cmake_c_flags_sep NATIVE_COMMAND "${CMAKE_C_FLAGS}")
     if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
         list(APPEND cmake_c_flags_sep "${CMAKE_C_COMPILE_OPTIONS_TARGET}${CMAKE_C_COMPILER_TARGET}")
     endif()
-
+    # The 'cpio_archive' is no explicit parameter for the command, because it is
+    # hard-coded already in the specific 'cpio_archive_s' file we have generated
+    # above.
     add_custom_command(
         OUTPUT ${output_name}
-        COMMAND rm -f ${cpio_archive}
-        COMMAND ${commands}
         COMMAND
-            sh -c
-            "echo 'X.section ._archive_cpio,\"aw\"X.globl ${archive_symbol}, ${archive_symbol}_endX${archive_symbol}:X.incbin \"${cpio_archive}\"X${archive_symbol}_end:X' | tr X '\\n'"
-            > "${cpio_archive_s}"
-        COMMAND
-            ${CMAKE_C_COMPILER} ${cmake_c_flags_sep} -c -o ${output_name} "${cpio_archive_s}"
-        DEPENDS ${input_files} ${MAKE_CPIO_DEPENDS}
-        VERBATIM
-        BYPRODUCTS
-        "${cpio_archive}"
-        "${cpio_archive_s}"
+            ${CMAKE_C_COMPILER} ${cmake_c_flags_sep} -c -o "${output_name}" "${cpio_archive_s}"
+        DEPENDS "${cpio_archive_creator}" "${cpio_archive_s}" "${cpio_archive}"
         COMMENT "Generate CPIO archive ${output_name}"
     )
+
 endfunction(MakeCPIO)
