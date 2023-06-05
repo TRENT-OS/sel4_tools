@@ -10,7 +10,7 @@ cmake_minimum_required(VERSION 3.8.2)
 include_guard(GLOBAL)
 
 function(ApplyData61ElfLoaderSettings kernel_platform kernel_sel4_arch)
-    set(binary_list "tx1;hikey;odroidc2;odroidc4;imx8mq-evk;imx8mm-evk;hifive;tqma8xqp1gb;bcm2711")
+    set(binary_list "tx1;hikey;odroidc2;odroidc4;imx8mq-evk;imx8mm-evk;hifive;tqma8xqp1gb;bcm2711;xavier")
     set(efi_list "tk1;rockpro64;quartz64")
     set(uimage_list "tx2;am335x")
     if(
@@ -166,6 +166,9 @@ function(correct_platform_strings)
         "exynos5:exynos5250,exynos5410,exynos5422"
         "am335x:am335x-boneblack,am335x-boneblue,am335x-bone"
         "zynqmp:zcu102,ultra96,ultra96v2"
+        "tx1:jetson-tx1-dev-kit,jetson-nano-2gb-dev-kit"
+        "tx2:jetson-tx2-asg001,jetson-tx2-nx-a206"
+        "xavier:jetson-xavier-nx-dev-kit,aetina-an110-xnx"
         "-KernelSel4Arch"
         "pc99:x86_64,ia32"
     )

@@ -19,6 +19,7 @@
 #define CPUID_IMPL_QCOMM   'Q'
 #define CPUID_IMPL_MARV    'V'
 #define CPUID_IMPL_MOT     'M'
+#define CPUID_IMPL_NVIDIA  'N'
 #define CPUID_IMPL_INTEL   'i'
 #define CPUID_ARCH_ARMv4    0x1
 #define CPUID_ARCH_ARMv4T   0x2
@@ -52,6 +53,8 @@ OPTIMIZE_CHANGE static const char *cpuid_get_implementer_str(uint32_t cpuid)
         return "Marvell Semiconductor Inc.";
     case CPUID_IMPL_MOT:
         return "Motorola, Freescale Semiconductor Inc.";
+    case CPUID_IMPL_NVIDIA:
+        return "NVIDIA";
     case CPUID_IMPL_INTEL:
         return "Intel Corp.";
     default:
@@ -87,6 +90,8 @@ OPTIMIZE_CHANGE static const char *cpuid_get_arch_str(uint32_t cpuid)
 OPTIMIZE_CHANGE static const char *cpuid_get_arm_part_str(uint32_t cpuid)
 {
     switch (CPUID_PART(cpuid)) {
+    case 0x4:
+        return "Carmel";
     case 0xC05:
         return "Cortex-A5";
     case 0xC07:
@@ -162,7 +167,7 @@ void print_cpuid(void)
     const char *part = NULL;
     cpuid = read_cpuid_id();
 
-    if (CPUID_IMPL(cpuid) == CPUID_IMPL_ARM) {
+    if (CPUID_IMPL(cpuid) == CPUID_IMPL_ARM  ||  CPUID_IMPL(cpuid) == CPUID_IMPL_NVIDIA) {
         part = cpuid_get_arm_part_str(cpuid);
     }
 
